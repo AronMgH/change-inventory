@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Inventory" ALTER COLUMN "picture" DROP NOT NULL,
+ALTER COLUMN "remark" DROP NOT NULL;

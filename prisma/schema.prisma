@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl =  env("Shadow_Database_URL")
+}
+
+
+enum Role {
+  STAFF
+  ADMIN
+}
+enum ActivityType {
+  Logged
+  Created
+  Deleted
+  Updated
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  position String @default("Staff") 
+  email String @unique
+  username String @unique
+  password String
+  role Role @default(STAFF)
+  inventories Inventory[]
+}
+
+model ActivityHistory {
+ id Int @id @default(autoincrement())
+ activityMessage String
+ activityType ActivityType 
+ createdAt DateTime @default(now())
+ topLevel Boolean @default(false) //topLevel activities are shown only to admins.
+}
+
+
+model Inventory {
+  id Int @id @default(autoincrement())
+  name String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade )
+  userId Int
+  quantity Int
+  functionalItems Int 
+  disfunctionalItems Int
+  picture String? 
+  remark String?
+}
