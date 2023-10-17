@@ -41,8 +41,9 @@ import {
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inventorySchema } from "@/prisma/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFormState } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -80,9 +81,19 @@ export function DataTable<TData, TValue>({
     resolver: zodResolver(inventorySchema),
   });
 
-  function onSubmit(values: z.infer<typeof inventorySchema>) {
+  const [isSubmitted, setIsSubmitted ] = useState(false)
+
+  async function onSubmit(values: z.infer<typeof inventorySchema>) {
+    console.log('It i working.')
     console.log(values);
   }
+
+  useEffect(() =>{
+    setIsSubmitted(true)
+    setTimeout(() => {
+      setIsSubmitted(false)
+    }, 200)
+  }, [form.formState.isSubmitted]); 
 
   return (
     <div>
@@ -169,7 +180,7 @@ export function DataTable<TData, TValue>({
                     <FormItem>
                       <FormLabel>Picture</FormLabel>
                       <FormControl>
-                        <Input {...field} type="file" />
+                        <Input {...field} type="text" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -189,8 +200,12 @@ export function DataTable<TData, TValue>({
                   )}
                 />
                 <div className="flex justify-end">
-                  <Button type="submit" className="mt-3">Submit</Button>
+                  <Button type="submit" className="mt-3">Add Item</Button>
                 </div>
+                {
+                  isSubmitted ??
+                <div className="text-green-600 text-sm my-2">Form Submitted Succesfully.</div>
+                }
                 </form>
             </Form>
           </SheetContent>

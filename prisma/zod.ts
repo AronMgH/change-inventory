@@ -6,6 +6,7 @@ const userSchema = z.object({
   Position: z.string(),
   email: z.string().email(),
   username: z.string(),
+  fullname: z.string(),
   password: z.string(),
   role: z.enum(['STAFF', 'ADMIN']),
 });

@@ -8,7 +8,9 @@ async function initUsers(){
         where: { email: 'alice@prisma.com'},
         update: {},
         create: {
+            id: 200,
             email: 'alice@prisma.com',
+            fullname: 'Alice Prisma',
             username: 'Alice',
             password: await hash('alice', 12),
         }
@@ -18,7 +20,9 @@ async function initUsers(){
         where: { email: 'aron@prisma.com'},
         update: {},
         create: {
+            id: 201,
             email: 'aron@prisma.com',
+            fullname: 'Alice Prisma',
             username: 'Aron',
             password: await hash('aron',12),
         }
@@ -27,7 +31,9 @@ async function initUsers(){
         where: { email: 'selam@prisma.com'},
         update: {},
         create: {
+            id: 202,
             email: 'selam@prisma.com',
+            fullname: 'Alice Prisma',
             username: 'Selam',
             password: await hash('selam', 12),
         }
@@ -36,7 +42,9 @@ async function initUsers(){
         where: { email: 'bob@prisma.com'},
         update: {},
         create: {
+            id: 203,
             email: 'bob@prisma.com',
+            fullname: 'Alice Prisma',
             username: 'Bob',
             password: await hash('bob', 12),
         }
@@ -68,7 +76,7 @@ async function initInventory(){
             create: {
                 id: i,
                 name: `Item ${i}`,
-                userId: i,
+                userId: Math.ceil(200 +i % 2.5) ,
                 quantity: 100,
                 functionalItems: 80,
                 disfunctionalItems: 20,
