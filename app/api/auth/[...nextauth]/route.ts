@@ -5,10 +5,18 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 const prisma = new PrismaClient();
 
+
+type UserWithId = {
+  id: number;
+} & {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+};
+
+
+
 export const authOptions: NextAuthOptions = {
-  session: {
-    strategy: "jwt",
-  },
   providers: [
     CredentialsProvider({
       name: "Sign in",
@@ -48,40 +56,45 @@ export const authOptions: NextAuthOptions = {
           id: user.id + "",
           email: user.email,
           username: user.username,
-          randomKey: 'random key'
+          // randomKey: 'random key'
         };
       },
     }),
   ],
+  
   callbacks: {
-    session: ({ session, token }) => {
+    session: async ({ session, token, user }) => {
       // console.log('S-Session:',session, "S-TOKEN",token)
-      
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id:  token.id,
-          username: token.username as string,
-          randomKey:token.randomKey
-        }
-      };
+      // return {
+      //   ...session,
+      //   user: {
+      //     ...session.user,
+      //     id:  token.id,
+      //     username: token.username as string,
+      //     // randomKey:token.randomKey
+      //   }
+      // };
+      if(session?.user){
+        (session.user as UserWithId).id = parseInt(token.uid as string)
+      }
+      return session
     },
     jwt: ({ token, user }) => {
       // console.log('JWT-T:',token, "JWT-U",user)
       if(user){
         const u = user as unknown as any
-        return {
-          ...token,
-          id: u.id,
-          username: u.username,
-          email: u.email,
-          randomKey: u.randomKey
-        }
+        token.uid = user.id 
+        token.username = u.username
+        token.email = u.email
+
+        return token
       }
       return token;
     },
   },
+  session: {
+    strategy: 'jwt'
+  }
 };
 
 const handler = NextAuth(authOptions);

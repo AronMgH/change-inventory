@@ -1,43 +1,56 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
+// import { getSession } from "next-auth/react";
+
 import { inventorySchema } from "@/prisma/zod";
 
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
+  console.log("fetching inventories.");
   try {
     const url = new URL(req.url);
     const inventory_id = url.searchParams.get("id");
-
     // If fetching a single inventory, handle separately
     if (inventory_id) {
       const id = parseInt(inventory_id);
-      const inventory = await prisma.inventory.findUnique({ where: { id: id } });
+      const inventory = await prisma.inventory.findUnique({
+        where: { id: id },
+      });
       return NextResponse.json(inventory);
     }
 
     // Fetch all inventories
     const inventories = await prisma.inventory.findMany();
-    
-    return NextResponse.json(inventories);
 
+    return NextResponse.json(inventories);
   } catch (error) {
     return NextResponse.error();
   }
 }
 
 export async function POST(req: NextRequest) {
-  const body = req.body;
+  console.log('got post request')
+  const body = await req.json();
+  // const session = await getSession();
+  // const url = new URL(req.url);s
+  // const user_id = url.searchParams.get("user_id");
+  
+  // if (session) {
+    try {
 
-  try {
-    const validatedData = inventorySchema.parse(body);
+      const validatedData = inventorySchema.parse(body);
 
-    const newInventory = await prisma.inventory.create({ data: validatedData });
-    return NextResponse.json(newInventory);
-  } catch (error) {
-    return NextResponse.error();
-  }
+      // validatedDate.userId = parseInt(user_id)
+      const newInventory = await prisma.inventory.create({
+        data: validatedData,
+      });
+      return GET(req)
+    } catch (error) {
+      return NextResponse.error();
+    }
+  // }
 }
 
 export async function PUT(req: NextRequest) {

@@ -44,6 +44,8 @@ import { inventorySchema } from "@/prisma/zod";
 import { useForm, useFormState } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { UserWithId } from "@/components/user_type";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -59,6 +61,7 @@ export function DataTable<TData, TValue>({
     []
   );
   const [rowSelection, setRowSelection] = React.useState({});
+  const { data: session, status } = useSession();
 
   const table = useReactTable({
     data,
@@ -79,21 +82,39 @@ export function DataTable<TData, TValue>({
 
   const form = useForm<z.infer<typeof inventorySchema>>({
     resolver: zodResolver(inventorySchema),
+    defaultValues:{
+      userId:(session?.user as UserWithId).id,
+    }
   });
 
-  const [isSubmitted, setIsSubmitted ] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   async function onSubmit(values: z.infer<typeof inventorySchema>) {
-    console.log('It i working.')
+    console.log("It i working.");
     console.log(values);
+    const rest = await fetch(`/api/${(session?.user as UserWithId).id}/inventory`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(values)
+    })
+    .then(res => {
+      setIsSubmitted(true);
+      console.log('SUCCESS:Form submitted successfully');
+    }).catch(err => {
+      console.log('ERROR:Form submission failed.');
+    
+    })
+
   }
 
-  useEffect(() =>{
-    setIsSubmitted(true)
+  useEffect(() => {
+    setIsSubmitted(true);
     setTimeout(() => {
-      setIsSubmitted(false)
-    }, 200)
-  }, [form.formState.isSubmitted]); 
+      setIsSubmitted(false);
+    }, 200);
+  }, [form.formState.isSubmitted]);
 
   return (
     <div>
@@ -114,7 +135,7 @@ export function DataTable<TData, TValue>({
           <SheetContent id="sheet-back">
             <SheetHeader className="font-bold">Add Item</SheetHeader>
             <SheetDescription>
-              Use the following form to add an item to your inventory 
+              Use the following form to add an item to your inventory
             </SheetDescription>
             <Form {...form}>
               <form
@@ -141,7 +162,7 @@ export function DataTable<TData, TValue>({
                     <FormItem>
                       <FormLabel>Quantity</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" />
+                        <Input {...field} type="number" onChange={(e) => field.onChange(e.target.valueAsNumber)}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -149,12 +170,26 @@ export function DataTable<TData, TValue>({
                 />
                 <FormField
                   control={form.control}
+                  name="userId"
+                  render={({ field }) => (
+                    <FormItem
+                      className="hidden"
+                    >
+                      <FormControl>
+                        <Input {...field} disabled type="number" onChange={(e) => field.onChange(e.target.valueAsNumber)}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />                
+                <FormField
+                  control={form.control}
                   name="functionalItems"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Functional Items</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" />
+                        <Input {...field} type="number" onChange={(e) => field.onChange(e.target.valueAsNumber)}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -167,7 +202,7 @@ export function DataTable<TData, TValue>({
                     <FormItem>
                       <FormLabel>Disfunctional Items</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" />
+                        <Input {...field} type="number" onChange={(e) => field.onChange(e.target.valueAsNumber)}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -186,7 +221,7 @@ export function DataTable<TData, TValue>({
                     </FormItem>
                   )}
                 />
-               <FormField
+                <FormField
                   control={form.control}
                   name="remark"
                   render={({ field }) => (
@@ -200,13 +235,16 @@ export function DataTable<TData, TValue>({
                   )}
                 />
                 <div className="flex justify-end">
-                  <Button type="submit" className="mt-3">Add Item</Button>
+                <Button type="submit" className="mt-3">
+                  Add Item
+                </Button>
                 </div>
-                {
-                  isSubmitted ??
-                <div className="text-green-600 text-sm my-2">Form Submitted Succesfully.</div>
-                }
-                </form>
+                {isSubmitted ?? (
+                  <div className="text-green-600 text-sm my-2">
+                    Form Submitted Succesfully.
+                  </div>
+                )}
+              </form>
             </Form>
           </SheetContent>
         </Sheet>

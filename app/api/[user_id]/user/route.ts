@@ -5,6 +5,7 @@ import { userSchema } from "@/prisma/zod";
 
 const prisma = new PrismaClient();
 export async function GET(req: NextRequest) {
+  console.log('fetching users')
     try {
       const url = new URL(req.url);
       const user_id = url.searchParams.get("id");

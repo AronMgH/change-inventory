@@ -70,20 +70,20 @@ export const columns: ColumnDef<Item>[] = [
         }
     },
     {
-        accessorKey: 'functionalNo',
+        accessorKey: 'functionalItems',
         header: ({column}) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() ==='asc')}>Functional <ArrowUpDown className="ml-2  h-3 w-3"></ArrowUpDown></Button>,
         cell: ({row}) => {
-            const val = row.getValue('functionalNo')
+            const val = row.getValue('functionalItems')
             return (
                 <div className="text-center">{ val as string}</div>
             )
         }
     },
     {
-        accessorKey: 'disfunctionalNo',
+        accessorKey: 'disfunctionalItems',
         header: ({column}) => <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() ==='asc')}>Disfunctional <ArrowUpDown className="ml-2  h-3 w-3"></ArrowUpDown></Button>,
         cell: ({row}) => {
-            const val = row.getValue('disfunctionalNo')
+            const val = row.getValue('disfunctionalItems')
             return (
                 <div className="text-center">{ val as string}</div>
             )
@@ -95,7 +95,14 @@ export const columns: ColumnDef<Item>[] = [
         cell: ({row}) => {
             const val = row.getValue('picture')
             return (
-                <div className="text-center"><Link className={buttonVariants({variant:'link',size:'sm'})} href={val as string}>View</Link></div>
+                <div className="text-center">
+                {
+                    val != null 
+                    ?  <Link className={buttonVariants({variant:'link',size:'sm'})} href={val as string ?? ""}>View</Link> 
+                    : ""
+                }
+                    
+                </div>
             )
         }
     },

@@ -34,7 +34,7 @@ export default function SideBar() {
     },
     {
       name: "Logout",
-      path: "/",
+      path: "/api/auth/signout",
       icon: "ArrowLeftIcon",
     },
   ];

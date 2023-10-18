@@ -3,7 +3,7 @@ import { z } from 'zod'
 // User schema
 const userSchema = z.object({
   id: z.number(),
-  Position: z.string(),
+  position: z.string(),
   email: z.string().email(),
   username: z.string(),
   fullname: z.string(),
@@ -32,9 +32,9 @@ const inventorySchema = z.object({
   id: z.number().optional(),
   name: z.string(),
   userId: z.number(),
-  quantity: z.string().transform(Number),
-  functionalItems: z.string().transform(Number),
-  disfunctionalItems: z.string().transform(Number),
+  quantity: z.number(),
+  functionalItems:  z.number(),
+  disfunctionalItems:  z.number(),
   picture: z.string().url().optional(),
   remark: z.string().optional(),
 });

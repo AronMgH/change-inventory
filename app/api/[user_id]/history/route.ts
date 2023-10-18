@@ -6,6 +6,7 @@ import { activityHistorySchema } from "@/prisma/zod";
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
+  console.log('Fetching Histories')
     try {
       const url = new URL(req.url);
       const activity_id = url.searchParams.get("id");

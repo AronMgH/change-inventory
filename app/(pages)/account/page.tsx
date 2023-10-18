@@ -41,15 +41,77 @@ import {
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import Loading from "./loading";
+import { UserWithId } from "@/components/user_type";
+
+
+
+
+
 export default function AccountPage() {
+  
+
+  const {data:session, status} =  useSession();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [account, setAccount] = useState({});
+
+  
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchData = async () => {
+      // Check if the session data is loaded and not null
+      await session
+      if ( session) {
+        // Fetch the account data using the session id
+        console.log('fetching user with id ', session.user)
+        console.log('account id :', (session. user as UserWithId) . id)
+        const response = await fetch(`/api/user?id=${(session. user as UserWithId) . id}`);
+        const data = await response.json();
+        setAccount(data);
+        // form.(...account);
+      }
+      setIsLoading(false);
+    };
+    // console.log("fetching accounts", account);
+    fetchData();
+  }, [session]);
+  
+  const [formHeader, setFormHeader] = useState("Add New User")
   const form = useForm<z.infer<typeof userSchema>>({
     resolver: zodResolver(userSchema),
+    // defaultValues: account,
   });
+
+  const initializeForm = async (type:string) => {
+    if(type === "add"){
+      console.log('set form to add new user')
+      form.reset()
+      setFormHeader("Add New Usser")
+    } else {
+      console.log(account)
+      console.log('set forrm to edit an existing user')
+      form.reset({
+        fullname: account.fullname,
+        username: account.username,
+        email: account.email,
+        role: account.role,
+        position: account.position
+      })
+      setFormHeader("Edit User")
+    }
+  }
+
   const onSubmit = async (values: z.infer<typeof userSchema>) => {
     console.log(values);
   };
 
   return (
+    <>
+    {
+    session && account ?
     <div className="p-16">
       <div className="flex justify-center gap-12">
         <div className="w-2/3">
@@ -60,23 +122,39 @@ export default function AccountPage() {
                 <Dialog>
                   <div className="ml-auto">
                     <DialogTrigger>
-                      <Button variant="link" className="mr-2">
+                      <Button variant="link" className="mr-2" onMouseDown={()=>initializeForm('edit')}>
                         Edit User
                       </Button>
-                      <Button variant="link" className="mr-2">
+                      <Button variant="link" className="mr-2" onMouseDown={()=>initializeForm('add')}>
                         Add User
                       </Button>
                     </DialogTrigger>
                   </div>
                   <div className="flex justify-center">
                     <DialogContent className="w-1/2 ml-1/5 pt-6">
-                      <DialogTitle>Add New User</DialogTitle>
+                      <DialogTitle>{formHeader}</DialogTitle>
                       <DialogDescription>
                         Fill the following form and submit it to add a new user.
                       </DialogDescription>
                       <Form {...form}>
                         <form className="mt-2">
-                          <FormField
+                        <FormField
+                            control={form.control}
+                            name="fullname"
+                            render={(field) => (
+                              <FormItem>
+                                <FormLabel>Full name:</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="text" />
+                                </FormControl>
+                                <FormDescription>
+                                  Enter your fullname here
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                                               <FormField
                             control={form.control}
                             name="username"
                             render={(field) => (
@@ -110,7 +188,7 @@ export default function AccountPage() {
                           />
                           <FormField
                             control={form.control}
-                            name="Position"
+                            name="position"
                             render={(field) => (
                               <FormItem>
                                 <FormLabel>Position</FormLabel>
@@ -141,7 +219,7 @@ export default function AccountPage() {
                                 </FormItem>
                               )}
                             />
-                            <FormField
+                            {/* <FormField
                               control={form.control}
                               name="password"
                               render={(field) => (
@@ -153,11 +231,11 @@ export default function AccountPage() {
                                   <FormMessage />
                                 </FormItem>
                               )}
-                            />
+                            /> */}
                           </div>
                           <FormField
                             control={form.control}
-                            name="email"
+                            name="role"
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Email</FormLabel>
@@ -204,12 +282,12 @@ export default function AccountPage() {
                 </div>
 
                 <div className="flex flex-col justify-center">
-                <h3>Bryan Adams</h3>
-                <small className="">Secretary</small>
+                <h3>{account.fullname}</h3>
+                <small className="">{account.position}</small>
                 <Separator className="my-3"/>
-                <h3 className="text-sm my-1 ">username: @bryan</h3>
-                <div className="text-sm my-1">Email: bryan.adma@gmail.com</div>
-                <small className="my-1">Role: STAFF</small>
+                <h3 className="text-sm my-1 ">username: {account.username}</h3>
+                <div className="text-sm my-1">Email: {account.email}</div>
+                <small className="my-1">Role: {account.role}</small>
                 <small>Total inventories you created: 1213</small>
                 </div>
               </div>
@@ -218,5 +296,9 @@ export default function AccountPage() {
         </div>
       </div>
     </div>
+    :
+    <Loading />
+  }
+  </>
   );
 }
