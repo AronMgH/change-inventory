@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       const newInventory = await prisma.inventory.create({
         data: validatedData,
       });
-      return GET(req)
+      return NextResponse.json(newInventory);
     } catch (error) {
       return NextResponse.error();
     }

@@ -46,26 +46,62 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { UserWithId } from "@/components/user_type";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { columns } from "./columns";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  updateInventory: () => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  updateInventory
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+
+
+  const enhancedColumns: ColumnDef<TData, TValue>[] = columns.map(column => {
+    if ( column.id == 'actions'){
+      return {
+      ...column,
+        cell: ({row}:{row:any}) => {
+          const id = row.getValue('id')
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4"></MoreHorizontal>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator/>
+                <DropdownMenuItem onClick={() =>setOpenModal(true)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => deleteItem(id as number) }>Delete</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
+      }
+    }
+    return column
+  })
+
   const [rowSelection, setRowSelection] = React.useState({});
+  const [openModal, setOpenModal ] = useState(false);
   const { data: session, status } = useSession();
 
   const table = useReactTable({
     data,
-    columns,
+    columns:enhancedColumns,
+    
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -78,6 +114,7 @@ export function DataTable<TData, TValue>({
       columnFilters,
       rowSelection,
     },
+  
   });
 
   const form = useForm<z.infer<typeof inventorySchema>>({
@@ -92,7 +129,7 @@ export function DataTable<TData, TValue>({
   async function onSubmit(values: z.infer<typeof inventorySchema>) {
     console.log("It i working.");
     console.log(values);
-    const rest = await fetch(`/api/${(session?.user as UserWithId).id}/inventory`, {
+    await fetch(`/api/${(session?.user as UserWithId).id}/inventory`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -101,12 +138,30 @@ export function DataTable<TData, TValue>({
     })
     .then(res => {
       setIsSubmitted(true);
+      updateInventory();
       console.log('SUCCESS:Form submitted successfully');
+      setOpenModal(false)
     }).catch(err => {
       console.log('ERROR:Form submission failed.');
     
     })
+  }
 
+  // async function 
+
+  async function deleteItem(id: number) {
+    await fetch(`/api/${(session?.user as UserWithId).id}/inventory?id=${id}`, {
+      method: 'DELETE',
+    }).then(() => {
+      console.log('Success:Item deleted successfully')
+      updateInventory();
+    }).catch((err) => {
+      console.log('Error: Failed deleting an item. from inventory,', err)
+    })
+  }
+
+  async function editItem(id:number) {
+    
   }
 
   useEffect(() => {
@@ -128,7 +183,7 @@ export function DataTable<TData, TValue>({
             table.getColumn("name")?.setFilterValue(event.target.value);
           }}
         />
-        <Sheet modal={true}>
+        <Sheet open={openModal} onOpenChange={(val) => setOpenModal}>
           <SheetTrigger>
             <Button>Add Item</Button>
           </SheetTrigger>

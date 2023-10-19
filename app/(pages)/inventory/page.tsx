@@ -11,10 +11,11 @@ export default  function InventoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [inventory, setInventory] = useState([])
 
-
+  const [inventoryChanged, setInventoryChanged] = useState(false)
   const {data:session, status} =  useSession();
 
   useEffect(() => {
+    console.log('inventory changed.')
     setIsLoading(true)
     if(session){
 
@@ -28,13 +29,13 @@ export default  function InventoryPage() {
     fetchData()
   }
 
-  }, [session])
+  }, [session, inventoryChanged])
   
   return (
     <div>
       {
         !isLoading 
-        ? <DataTable columns={columns} data={inventory} />
+        ? <DataTable columns={columns} data={inventory} updateInventory={() => setInventoryChanged(!inventoryChanged)}/>
         : <Loading />
       }
     </div>

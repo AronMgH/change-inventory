@@ -113,7 +113,6 @@ export const columns: ColumnDef<Item>[] = [
     {
         id: 'actions',
         cell: ({row}) => {
-            const item = row.original
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
