@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
   // }
 }
 
-export async function PUT(req: NextRequest) {
-  const body = req.body;
+export async function PATCH(req: NextRequest) {
+  const body = await req.json();
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
 

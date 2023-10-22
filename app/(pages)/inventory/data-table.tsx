@@ -50,6 +50,16 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal } from "lucide-react";
 import { columns } from "./columns";
 
+/**
+ * Renders a data table component.
+ *
+ * @param {DataTableProps<TData, TValue>} {
+ *   columns,
+ *   data,
+ *   updateInventory
+ * } - The props for the DataTable component.
+ * @return {JSX.Element} The rendered DataTable component.
+ */
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -73,6 +83,7 @@ export function DataTable<TData, TValue>({
       ...column,
         cell: ({row}:{row:any}) => {
           const id = row.getValue('id')
+
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -83,7 +94,7 @@ export function DataTable<TData, TValue>({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator/>
-                <DropdownMenuItem onClick={() =>setOpenModal(true)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={() =>{setOpenModal(true); populateForm(row)}}>Edit</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => deleteItem(id as number) }>Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -96,6 +107,7 @@ export function DataTable<TData, TValue>({
 
   const [rowSelection, setRowSelection] = React.useState({});
   const [openModal, setOpenModal ] = useState(false);
+  const [formActionType, setFormActionType] = useState('add')
   const { data: session, status } = useSession();
 
   const table = useReactTable({
@@ -126,11 +138,19 @@ export function DataTable<TData, TValue>({
 
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  /**
+   * Submits values to the server and updates the inventory.
+   *
+   * @param {z.infer<typeof inventorySchema>} values - The values to be submitted.
+   * @return {Promise<void>} A promise that resolves when the submission is complete.
+   */
   async function onSubmit(values: z.infer<typeof inventorySchema>) {
-    console.log("It i working.");
-    console.log(values);
-    await fetch(`/api/${(session?.user as UserWithId).id}/inventory`, {
-      method: 'POST',
+    // console.log("It i working.");
+    // console.log(values);
+    if(formActionType == 'add') {
+
+      await fetch(`/api/${(session?.user as UserWithId).id}/inventory`, {
+        method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -143,8 +163,26 @@ export function DataTable<TData, TValue>({
       setOpenModal(false)
     }).catch(err => {
       console.log('ERROR:Form submission failed.');
-    
-    })
+    }
+    )} else {
+      await fetch(`/api/${(session?.user as UserWithId).id}/inventory?id=${values.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(values)
+      })
+      .then(res => {
+        setIsSubmitted(true);
+        updateInventory();
+        console.log('SUCCESS:Form submitted successfully');
+        setOpenModal(false)
+      }).catch(err => {
+        console.log('ERROR:Form submission failed.');
+      }
+      )
+    }
+  
   }
 
   // async function 
@@ -160,16 +198,28 @@ export function DataTable<TData, TValue>({
     })
   }
 
-  async function editItem(id:number) {
-    
+  // type fieldType = "id" | "name" | "functionalItems" | "disfunctionalItmes" | 'remark' | 'picture' | 'quantity'
+
+  function populateForm(row: any) {
+    setFormActionType('edit');
+
+    form.setValue('name', row.getValue('name') ?? undefined)
+    form.setValue('functionalItems', row.getValue('functionalItems') ?? undefined)
+    form.setValue('disfunctionalItems', row.getValue('disfunctionalItems') ?? undefined)
+    form.setValue('remark', row.getValue('remark') ?? undefined )
+    form.setValue('picture', row.getValue('picture') ?? undefined)
+    form.setValue('quantity', row.getValue('quantity') ?? undefined)
+    form.setValue('id', row.getValue('id') ?? undefined)
   }
 
+
   useEffect(() => {
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-    }, 200);
-  }, [form.formState.isSubmitted]);
+   if(!openModal){
+    form.reset()
+    setFormActionType('add')
+   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openModal]);
 
   return (
     <div>
@@ -183,14 +233,16 @@ export function DataTable<TData, TValue>({
             table.getColumn("name")?.setFilterValue(event.target.value);
           }}
         />
-        <Sheet open={openModal} onOpenChange={(val) => setOpenModal}>
+        <Sheet open={openModal} onOpenChange={(val) => setOpenModal(val)}>
           <SheetTrigger>
-            <Button>Add Item</Button>
+            <Button onClick={()=>setOpenModal(true)}>
+              Add Item
+              </Button>
           </SheetTrigger>
           <SheetContent id="sheet-back">
-            <SheetHeader className="font-bold">Add Item</SheetHeader>
+            <SheetHeader className="font-bold">{formActionType === 'add' ? 'Add Item' : 'Update Item' } </SheetHeader>
             <SheetDescription>
-              Use the following form to add an item to your inventory
+              Use the following form to { formActionType === "add" ? "add an item to your inventory" : "edit an item." }
             </SheetDescription>
             <Form {...form}>
               <form
@@ -291,7 +343,7 @@ export function DataTable<TData, TValue>({
                 />
                 <div className="flex justify-end">
                 <Button type="submit" className="mt-3">
-                  Add Item
+                {formActionType === 'add' ? 'Add Item' : 'Update Item' }
                 </Button>
                 </div>
                 {isSubmitted ?? (
